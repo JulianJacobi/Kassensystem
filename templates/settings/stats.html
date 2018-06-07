@@ -1,0 +1,102 @@
+{% extends 'settings/base.html' %}
+{% load l10n %}
+
+{% block settings_content %}
+    <h1>Event Stats <small>{{ event.name }}</small></h1>
+    <div class="col-md-4">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Produkte nach Anzahl</h3>
+            </div>
+            <div class="panel-body">
+                <table class="table table-condensed table-striped table-hover">
+                    <thead>
+                    <tr>
+                        <th>Produkt</th>
+                        <th style="text-align: right;">Anzahl</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for name,count in products_count.items %}
+                        <tr>
+                        <td>{{ name }}</td>
+                        <td style="text-align: right;">{{ count }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                    <tfoot>
+                    <tr>
+                        <td><b>Gesamt</b></td>
+                        <td style="text-align: right;"><b>{{ overall_products }}</b></td>
+                    </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Verkauf nach Zeit</h3>
+            </div>
+            <div class="panel-body">
+                <canvas id="amount_time_graph" style="width: 100%; height: 100%;"></canvas>
+                <script type="application/javascript">
+                    $(function () {
+                        var chart_canvas = $('#amount_time_graph').first();
+                        var chart = new Chart(chart_canvas, {
+                            type: 'line',
+                            data: {
+                                datasets: [
+                                    {
+                                        label: 'Betrag',
+                                        backgroundColor: 'rgb(255,0,0)',
+                                        borderColor: 'rgb(255,0,0)',
+                                        fill: false,
+                                        pointRadius: 0,
+                                        data: [
+                                            {% for time in amount_time %}
+                                                {
+                                                    x: moment.unix({{ time.timestamp|unlocalize }}),
+                                                    y: {{ time.amount|unlocalize }}
+                                                },
+                                            {% endfor %}
+                                        ]
+                                    }
+                                ]
+                            },
+                            pointRadius: 0,
+                            options: {
+                                scales: {
+                                    xAxes: [{
+                                        type: 'time',
+                                        time: {
+                                            format: 'MM.DD.YYYY HH:mm',
+                                            tooltipFormat: 'll HH:mm',
+                                            min: moment.unix({{ event.start.timestamp }}),
+                                            max: moment.unix({{ event.end.timestamp }})
+                                        },
+                                        scaleLabel: {
+                                            display: false,
+                                            labelString: 'Zeit'
+                                        }
+                                    }],
+                                    yAxes: [{
+                                        ticks: {
+                                            min: 0,
+                                            max: 20
+                                        },
+                                        scaleLabel: {
+                                            display: false,
+                                            labelString: 'Betrag'
+                                        }
+                                    }]
+                                }
+                            }
+                        })
+                    })
+                </script>
+            </div>
+        </div>
+    </div>
+{% endblock %}

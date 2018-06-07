@@ -1,0 +1,26 @@
+{% extends 'settings/base.html' %}
+
+{% block settings_content %}
+    <h1>{{ title }}</h1>
+    <form action="" method="post" class="form-horizontal">
+    {% include 'form.html' %}
+    <button class="btn btn-primary">Speichern</button>
+    </form>
+    <script type="application/javascript">
+    $(function () {
+        $('#{{ form.start.auto_id }}').datetimepicker({
+            format: 'DD.MM.YYYY HH:mm'
+        });
+        $('#{{ form.end.auto_id }}').datetimepicker({
+            format: 'DD.MM.YYYY HH:mm',
+            useCurrent: false //Important! See issue #1075
+        });
+        $("#{{ form.start.auto_id }}").on("dp.change", function (e) {
+            $('#{{ form.end.auto_id }}').data("DateTimePicker").minDate(e.date);
+        });
+        $("#{{ form.end.auto_id }}").on("dp.change", function (e) {
+            $('#{{ form.start.auto_id }}').data("DateTimePicker").maxDate(e.date);
+        });
+    })
+    </script>
+{% endblock %}

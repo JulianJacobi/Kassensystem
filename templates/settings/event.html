@@ -1,0 +1,29 @@
+{% extends 'settings/base.html' %}
+
+{% block settings_content %}
+    <h1>Eventübersicht <small>{{ event.name }}</small></h1>
+    <table class="table tabel-condensed table-striped table-hover">
+    <thead>
+    <tr>
+        <th>Typ</th>
+        <th>Zeit</th>
+        <th style="text-align: right;">Betrag</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for entry in entries %}
+        <tr>
+            <td>{{ entry.get_type_display }}</td>
+            <td>{{ entry.timestamp }}</td>
+            <td style="text-align: right;">{{ entry.amount }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+    <tfoot>
+    <tr>
+        <td colspan="2" style="text-align: right;"><b>Summe</b></td>
+        <td style="text-align: right;"><b>{{ complete_sum }}</b></td>
+    </tr>
+    </tfoot>
+    </table>
+{% endblock %}

@@ -1,0 +1,98 @@
+dev.container-kasse {
+    position: fixed;
+    overflow: hidden;
+}
+
+.btn-menu {
+    width: 3cm;
+    height: 3cm;
+    white-space: normal;
+    margin-right: 0.1cm;
+    margin-bottom: 0.1cm;
+}
+
+.btn-add {
+    border: 0.2cm dashed rgba(127,127,127,0.5);
+    border-radius: 30%;
+    background: transparent;
+    font-size: 1cm;
+}
+
+.btn-group .btn-menu {
+    margin-right:0 !important;
+}
+
+.form-control.btn-menu {
+    width: 100% !important;
+}
+
+#delete-area {
+    border: 0.2cm dashed rgba(127,127,127,0.5);
+    color: rgba(127,127,127,0.5);
+    border-radius: 10%;
+    background: transparent;
+    height: 25vw;
+    font-size: 10vw;
+    text-align: center;
+    vertical-align: middle;
+    line-height: 25vw;
+}
+#delete-area i {
+    z-index: -200;
+}
+
+#delete-area.dragover {
+    border-color: rgba(127,127,127,0.9);
+    color: rgba(127,127,127,0.9);
+
+}
+
+.btn-add.dragover {
+    border-color: rgba(127,127,127,0.9);
+}
+
+table.given-buttonfield .btn-menu {
+    width: 2cm;
+    height: 2cm;
+}
+
+table.given-buttonfield td {
+    text-align: left;
+    vertical-align: top;
+}
+
+table.given-buttonfield .double-button {
+    width: 4.1cm;
+}
+
+table.given-buttonfield .btn-h-double {
+    height: 4.1cm;
+}
+
+
+body.theme-orange {
+    background: #222222;
+    color: #eeeeee;
+}
+
+body.theme-orange a{
+    color: darkorange;
+}
+
+body.theme-orange .btn-link {
+    color: darkorange !important;
+}
+
+body.theme-orange .modal-content {
+    background: #444444;
+}
+
+.rotate {
+    transform: rotate(90deg);
+    transform-origin: 1cm 1cm;
+}
+
+.btn-black {
+    background: black;
+    color: white;
+}

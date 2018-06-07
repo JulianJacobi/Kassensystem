@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block body %}
+    <div class="col-md-4 col-md-offset-4" style="margin-top:10vh;">
+        <div class="panel panel-default">
+            <div class="panel-heading">Login</div>
+            <div class="panel-body">
+            {% if form.non_field_errors %}
+                {{ form.non_field_errors }}
+            {% else %}
+                <p class="login-box-msg">Bitte einloggen.</p>
+            {% endif %}
+            <form method="post" action="{% url 'login' %}">
+                {% csrf_token %}
+                <div class="form-group has-feedback {% if form.username.errors %}has-error{% endif %}">
+                    <input class="form-control" placeholder="Nutzername" name="{{ form.username.html_name }}" {% if form.username.value %}value="{{ form.username.value }}"{% endif %}>
+                    {{ form.username.errors }}
+                </div>
+                <div class="form-group has-feedback {% if form.password.errors %}has-error{% endif %}">
+                    <input type="password" class="form-control" placeholder="Passwort" name="{{ form.password.html_name }}" {% if form.password.value %}value="{{ form.password.value }}"{% endif %}>
+                    {{ form.password.errors }}
+                </div>
+                <button type="submit" class="btn btn-primary btn-block btn-flat">Anmelden</button>
+            </form>
+        </div>
+        </div>
+    </div>
+{% endblock %}

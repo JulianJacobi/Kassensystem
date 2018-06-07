@@ -1,0 +1,228 @@
+{% extends 'settings/base.html' %}
+{% load djmoney %}
+
+{% block settings_content %}
+    <div class="alert alert-success pull-right" role="alert" id="saved-alert" style="display: none;"><b>Erfolgreich gespeichert!</b></div>
+    <h1>
+        {{ menu.name }}
+        <div class="btn-group">
+            <button class="btn btn-danger" data-toggle="modal" data-target="#menu{{ menu.id }}_delete_modal">Menu entfernen</button>
+            <button class="btn btn-primary" onclick="save()">Speichern</button>
+        </div>
+    </h1>
+    <br>
+    <div class="col-sm-8 col-lg-9 menu-container" id="menu-container" style="overflow-y: scroll;">{% for menuitem in menu.menuitem_set.all %}<button class="btn btn-{{ menuitem.color }} btn-menu menu-item" data-product-id="{{ menuitem.product.id }}" data-color="{{ menuitem.color }}">{{ menuitem.product.name }}<br><b>{{ menuitem.product.price }}</b></button>{% endfor %}<button class="btn btn-menu btn-add" id="add-button" style="display: none;"></button></div>
+    <div class="col-sm-4 col-lg-3 products-container">
+        <form action="" class="form-horizontal">
+            <div class="form-group">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="product-search-field" placeholder="Suche...">
+                    <div class="btn input-group-addon"><i class="glyphicon glyphicon-search"></i></div>
+                </div>
+            </div>
+        </form>
+        <div id="product-search-results">
+        {% for product in all_products %}<button class="btn btn-default btn-menu palette-product" data-product-id="{{ product.id }}">{{ product.name }}<br><b>{{ product.price }}</b></button>{% endfor %}
+        </div>
+    </div>
+    <div class="col-sm-4 col-lg-3 delete-container" id="delete-area" style="display: none;">
+        <i class="glyphicon glyphicon-trash"></i>
+    </div>
+    <div id="hidden-area" style="display: none;"></div>
+    <div class="modal fade" id="menuItemEditModal" tabindex="-1" role="dialog" aria-labelledby="menuItemEditModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="menuItemModalLabel">Optionen</h4>
+                </div>
+                <div class="modal-body">
+                    <label for="select-color">Farbe</label>
+                    <select class="form-control" id="select-color">
+                        <option value="danger">Rot</option>
+                        <option value="warning">Gelb</option>
+                        <option value="info">Hellblau</option>
+                        <option value="primary">Blau</option>
+                        <option value="success">Grün</option>
+                        <option value="black">Schwarz</option>
+                        <option value="default">Farblos</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Schließen</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="menu{{ menu.id }}_delete_modal" tabindex="-1" role="dialog" aria-labelledby="menu{{ product.id }}_delete_model_label">
+            <form action="{% url 'kasse:delete_menu' menu.id %}" method="post">
+                {% csrf_token %}
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                            <h4 class="modal-title" id="menu{{ menu.id }}_delete_model_label">Menü entfernen</h4>
+                        </div>
+                        <div class="modal-body">
+                            Soll das Menü "{{ menu.name }}" wirklich entfernt werden?
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Abbrechen</button>
+                            <button type="submit" class="btn btn-danger">Entfernen</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    <script>
+    var selected_element = null;
+
+    function insertAtIndex(i, element) {
+        if(i === 0) {
+         $("#menu-container").prepend($(element));
+         return;
+        }
+
+
+        $("#menu-container > .menu-item:nth-child(" + (i) + ")").after($(element));
+    }
+
+    function save() {
+        var menu_data = [];
+        $('#menu-container').find('.menu-item').each(function () {
+            var index = $('.menu-item').index($(this));
+            menu_data.push({
+                sort: parseInt(index),
+                color: $(this).attr('data-color'),
+                menu_id: $(this).attr('data-product-id')
+            });
+        });
+        $.post("{% url 'kasse:ajax_update_menu' menu.id %}", {data: JSON.stringify(menu_data)}, function(data) {
+            $('#saved-alert').show();
+            setTimeout(function () {
+               $('#saved-alert').hide()
+            }, 3000)
+        })
+    }
+
+    function menu_item_onclick() {
+        selected_element = $(this);
+        load_setting_area();
+        $('#menuItemEditModal').modal('show')
+    }
+
+    function load_setting_area() {
+        $('#select-color').val(selected_element.attr('data-color'))
+    }
+
+    $('#select-color').on('change', function () {
+        $(selected_element).removeClass('btn-'+selected_element.attr('data-color'));
+        $(selected_element).addClass('btn-'+$(this).val());
+        $(selected_element).attr('data-color', $(this).val())
+    });
+
+    var palette_product_draggable_options = {
+        revert: function () {
+            return !$(this).hasClass('dropped');
+        },
+        revertDuration: 200,
+        cancel: false,
+        appendTo: 'body',
+        containment: 'body',
+        scroll: true,
+        helper: 'clone',
+        start: function () {
+            $('#add-button').show();
+        },
+        stop: function () {
+            $('#menu-container').append($('#add-button').hide());
+            $(this).removeClass('dropped')
+        }
+    };
+
+    $(function () {
+        $('#product-search-field').on('keyup', function () {
+            $.getJSON('{% url 'kasse:search_products' %}', {'q': $(this).val()}, function(data){
+                // ToDo rebuild product list
+                var results_container = $('#product-search-results');
+                results_container.text('');
+                for (var i in data) {
+                    if (data.hasOwnProperty(i)) {
+                        var product = data[i];
+                        var product_element = $('<button class="btn btn-default btn-menu palette-product" data-product-id="'+product.id+'">'+product.name+'<br><b>'+product.price+'</b></button>');
+                        product_element.draggable(palette_product_draggable_options);
+                        results_container.append(product_element);
+                    }
+                }
+            });
+        });
+
+        var current_drag_element_index = null;
+        $('.palette-product').draggable(palette_product_draggable_options);
+        var menu_item_draggable_options = {
+            revert: function (e) {
+                return !$(this).hasClass('dropped') && $(e).attr('id') !== 'delete-area';
+            },
+            revertDuration: 200,
+            cancel: false,
+            appendTo: 'body',
+            containment: 'body',
+            scroll: true,
+            helper: 'clone',
+            start: function () {
+                $('#add-button').show();
+                $('.products-container').hide();
+                $('#delete-area').show();
+                current_drag_element_index = $('#menu-container').find('.menu-item').index($(this));
+                $('#hidden-area').append($(this));
+                $(this).hide();
+            },
+            stop: function (e,u) {
+                if ($(this).hasClass('dropped') || $(this).hasClass('removed')) {
+                    $(this).removeClass('dropped removed')
+                } else {
+                    $(this).show();
+                    insertAtIndex(current_drag_element_index, $(this));
+                }
+                $('#menu-container').append($('#add-button').hide());
+                $('.products-container').show();
+                $('#delete-area').hide();
+            }
+        };
+        var menu_item_droppable_options = {
+            over: function () {
+                $('#add-button').insertBefore($(this));
+            }
+        };
+        $('.menu-item').draggable(menu_item_draggable_options).droppable(menu_item_droppable_options).on('click', menu_item_onclick);
+        $('#add-button').droppable({
+            drop: function (event, ui) {
+                var item_to_drop = $(ui.draggable);
+                if(item_to_drop.hasClass('palette-product')) {
+                    item_to_drop.addClass('dropped menu-item');
+                    item_to_drop = item_to_drop.clone().draggable(menu_item_draggable_options).droppable(menu_item_droppable_options).on('click', menu_item_onclick);
+                    item_to_drop.attr('data-color', 'default');
+                }
+                item_to_drop.insertBefore($(this)).show().addClass('dropped');
+            },
+            over: function () {
+                $('#menu-container').append($(this));
+                $('#add-button').insertBefore($(this));
+            }
+        });
+        $('#delete-area').droppable({
+            drop: function (event, ui) {
+                $(ui.draggable).addClass('removed');
+                $(ui.draggable).remove();
+            },
+            over: function () {
+                $(this).addClass('dragover');
+            },
+            out: function () {
+                $(this).removeClass('dragover');
+            }
+        });
+    });
+    </script>
+
+{% endblock %}

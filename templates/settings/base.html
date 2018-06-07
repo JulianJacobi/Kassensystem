@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block body %}
+    <br>
+    <div class="container-fluid">
+
+        <ul class="nav nav-pills">
+            <li role="presentation"><a href="{% url 'kasse:kasse' %}">Kassen</a></li>
+            <li role="presentation"><a href="{% url 'kasse:settings' %}">Menüeinstellungen</a></li>
+            <li role="presentation"><a href="{% url 'kasse:product_list' %}">Produkte</a></li>
+            <li role="presentation"><a href="{% url 'kasse:events' %}">Events</a></li>
+            <li role="presentation"><a href="{% url 'kasse:users' %}">Benutzer</a></li>
+            <li role="presentation"><a href="{% url 'kasse:general_settings' %}">Einstellungen</a></li>
+            <li role="presentation"><a href="{% url 'logout' %}"><i class="glyphicon glyphicon-log-out"></i> Abmelden</a></li>
+            <li role="presentation" class="pull-right"><h4 class="time-container" data-content="time" data-format="HH:mm"></h4></li>
+        </ul>
+    <br>
+        {% block settings_content %}{% endblock %}
+    </div>
+{% endblock %}

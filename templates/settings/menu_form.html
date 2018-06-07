@@ -1,0 +1,12 @@
+{% extends 'settings/base.html' %}
+
+{% block settings_content %}
+    <h1>Menü {% if edit %}bearbeiten{% else %}erstellen{% endif %}</h1>
+    <br>
+    <form action="{{ request.path }}" method="post" class="form-horizontal">
+    {% for field in form %}
+        {% include 'form.html' with form=form %}
+    {% endfor %}
+    <button class="btn btn-primary">Speichern</button>
+    </form>
+{% endblock %}

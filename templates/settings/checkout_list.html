@@ -1,0 +1,10 @@
+{% extends 'settings/base.html' %}
+
+{% block settings_content %}
+    {% for menu in menus %}
+        <a href="{% url 'kasse:edit_menu' menu.id %}"><button class="btn btn-default btn-menu">{{ menu.name }}</button></a>
+    {% endfor %}
+
+    <a href="{% url 'kasse:add_menu' %}"><button class="btn btn-primary btn-menu">Menü hinzufügen</button></a>
+{% endblock %}
+

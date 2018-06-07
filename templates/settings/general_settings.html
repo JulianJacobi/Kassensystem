@@ -1,0 +1,79 @@
+{% extends 'settings/base.html' %}
+
+{% block settings_content %}
+    <h1>Einstellungen</h1>
+    <form action="{{ request.path }}" method="post" id="disable_eth_form">
+        {% csrf_token %}
+        <input type="hidden" name="type" value="deactivate_network">
+    </form>
+    <h3>
+        Ethernet Port
+        <button class="btn btn-primary btn-xs" data-toggle="modal" data-target="#ip_edit_modal">ändern</button>
+        {% if not eth_deactivated %}
+            <button class="btn btn-danger btn-xs" type="submit" form="disable_eth_form">Deaktivieren</button>
+        {% endif %}
+    </h3>
+    {% if not eth_deactivated %}
+        <dl class="dl-horizontal">
+        <dt>IP Adresse</dt>
+        <dd>{{ ip_address }}</dd>
+        <dt>Subnetzmaske</dt>
+        <dd>{{ subnet }}</dd>
+        </dl>
+    {% else %}
+        Port ist deaktiviert
+    {% endif %}
+    <div class="modal fade" id="ip_edit_modal" tabindex="-1" role="dialog" aria-labelledby="ip_edit_modal_label" style="text-align: left;">
+        <form action="{{ request.path }}" method="post" class="form-horizontal">
+            {% csrf_token %}
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="ip_edit_modal_label">IP bearbeiten</h4>
+                    </div>
+                    <div class="modal-body">
+                        {% include 'form.html' with form=ip_form %}
+                    </div>
+                    <input type="hidden" name="type" value="network">
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Abbrechen</button>
+                        <button type="submit" class="btn btn-primary">Speichern</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <h3>Zeit <button class="btn btn-primary btn-xs" data-toggle="modal" data-target="#time_edit_modal">ändern</button></h3>
+    <dl class="dl-horizontal">
+    <dt>Zeit</dt>
+    <dd><span class="time-container" data-content="time" data-format="DD.MM.YYYY - HH:mm"></span> Uhr</dd>
+    </dl>
+    <div class="modal fade" id="time_edit_modal" tabindex="-1" role="dialog" aria-labelledby="time_edit_modal_label" style="text-align: left;">
+        <form action="{{ request.path }}" method="post">
+            {% csrf_token %}
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="time_edit_modal_label">Uhrzeit bearbeiten</h4>
+                    </div>
+                    <div class="modal-body">
+                        {% include 'form.html' with form=time_form %}
+                        <script type="application/javascript">
+                            $('#{{ time_form.time.auto_id }}').datetimepicker({
+                                format: 'DD.MM.YYYY HH:mm'
+                            });
+                        </script>
+                        <br>
+                    </div>
+                    <input type="hidden" name="type" value="time">
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Abbrechen</button>
+                        <button type="submit" class="btn btn-primary">Speichern</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+{% endblock %}

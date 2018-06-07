@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+{% load l10n %}
+{% load formats %}
+
+{% block body %}
+    <div class="container-fluid container-kasse">
+        <div id="menu-container" class="col-sm-8 col-lg-9">
+            {% for menuitem in menu.menuitem_set.all %}<button class="btn btn-{{ menuitem.color }} btn-menu menu-item" data-product-id="{{ menuitem.product.id }}" data-color="{{ menuitem.color }}" data-name="{{ menuitem.product.name }}" data-price="{{ menuitem.product.price|float|unlocalize }}">{{ menuitem.product.name }}<br><b class="price-nice">{{ menuitem.product.price }}</b></button>{% endfor %}
+        </div>
+        <div class="col-sm-4 col-lg-3" style="height: 100vh; max-height: 100vh; overflow-y: scroll;position: fixed; right: 0;">
+            <div class="btn-group btn-group-justified" role="group">
+                <div class="btn-group" role="group">
+                    <button class="btn btn-danger btn-menu" onclick="clear_cart()">Abbrechen</button>
+                </div>
+                <div class="btn-group" role="group">
+                    <button class="btn btn-success btn-menu" onclick="showFinalizeModal()">Bezahlen</button>
+                </div>
+            </div>
+            <h3>Wahrenkorb</h3>
+            <table class="table" id="cart">
+                <thead>
+                <tr>
+                    <th>Produkt</th>
+                    <th style="text-align: right;">Preis</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                </tbody>
+                <tfoot>
+                <tr>
+                    <td style="border-top-width: 2px;"><b>Summe</b></td>
+                    <td style="text-align: right; border-top-width: 2px;"><b id="sum-field">0,00 €</b></td>
+                    <td style="border-top-width: 2px;"></td>
+                </tr>
+                </tfoot>
+            </table>
+            <a href="{% url 'kasse:kasse' %}"><button class="form-control btn btn-default btn-menu">Hauptmenü</button></a>
+        </div>
+    </div>
+    <div class="modal fade" id="finalizeModal" tabindex="-1" role="dialog" aria-labelledby="finalizeModalLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="finalizeModalLabel">Bezahlen</h4>
+                </div>
+                <div class="modal-body" style="min-height: 9.5cm;">
+                    <table class="given-buttonfield" style="position: absolute;">
+                        <tr>
+                            <td><button class="btn btn-default btn-menu" onclick="givenConcat('7')">7</button></td>
+                            <td><button class="btn btn-default btn-menu" onclick="givenConcat('8')">8</button></td>
+                            <td><button class="btn btn-default btn-menu" onclick="givenConcat('9')">9</button></td>
+                            <td rowspan="2"><button class="btn btn-danger btn-menu double-button rotate" onclick="abortModal()">Abbrechen</button></td>
+                        </tr>
+                        <tr>
+                            <td><button class="btn btn-default btn-menu" onclick="givenConcat('4')">4</button></td>
+                            <td><button class="btn btn-default btn-menu" onclick="givenConcat('5')">5</button></td>
+                            <td><button class="btn btn-default btn-menu" onclick="givenConcat('6')">6</button></td>
+                        </tr>
+                        <tr>
+                            <td><button class="btn btn-default btn-menu" onclick="givenConcat('1')">1</button></td>
+                            <td><button class="btn btn-default btn-menu" onclick="givenConcat('2')">2</button></td>
+                            <td><button class="btn btn-default btn-menu" onclick="givenConcat('3')">3</button></td>
+                            <td rowspan="2">
+                                {% if gpio_available %}
+                                    <button class="btn btn-success btn-menu double-button rotate" onclick="openDrawer()">
+                                        Kasse öffnen
+                                    </button>
+                                {% else %}
+                                    <button class="btn btn-success btn-menu double-button rotate" onclick="finish()">
+                                        Fertig
+                                    </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><button class="btn btn-default btn-menu" onclick="givenConcat('0')">0</button></td>
+                            <td colspan="2"><button class="btn btn-default btn-menu double-button" onclick="resetGiven()">Korrektur</button></td>
+                        </tr>
+                    </table>
+                    <div id="finalizeCartTarget" style="margin-left: 9cm; height: 8cm; overflow-y: scroll;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="alertModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" data-backdrop="static" style="z-index: 1051;">
+    </div>
+    <script>
+    var opened = false;
+    var aborted = false;
+    function floatToNice(float) {
+        return (float.toFixed(2)+' €').replace('.',',');
+    }
+
+    function abortModal() {
+        aborted = true;
+        $('#finalizeModal').modal('hide');
+    }
+
+    function getSum() {
+        var table = $('#cart');
+        var sum = 0;
+        table.find('tbody').find('tr').each(function () {
+            sum += parseFloat($(this).attr('data-price'));
+        });
+        return sum;
+    }
+
+    function recalculateSum() {
+        var sum = getSum();
+        $('#sum-field').text(floatToNice(sum));
+    }
+
+    function showFinalizeModal() {
+        if ($('#cart').find('tbody').children().length == 0) {
+            return;
+        }
+        $('#finalizeModal').modal('show');
+        var cart = $('#cart').clone();
+        cart.attr('id', 'cart-clone');
+        cart.find('button').detach();
+        cart.find('tfoot').append('<tr><td>Gegeben</td><td style="text-align: right;"><span id="givenField" data-given="0">0,00 €</span></td><td></td></tr>');
+        cart.find('tfoot').append('<tr><td><b>Rückgeld</b></td><td style="text-align: right;"><b id="repeatField">0,00 €</b></td><td></td></tr>');
+        var cartContainer = $('#finalizeCartTarget');
+        cartContainer.text('');
+        cartContainer.append(cart);
+        setTimeout(function () {
+            cartContainer.scrollTop(cart[0].scrollHeight);
+        }, 200);
+    }
+
+    function clear_cart() {
+        $('#cart').find('tbody').find('tr').remove();
+        recalculateSum()
+    }
+
+    function givenConcat(number) {
+        var givenField = $('#givenField');
+        var givenString = givenField.attr('data-given');
+        givenString = givenString+number;
+        givenField.attr('data-given', givenString);
+        var givenFloat = parseFloat(givenString)/100;
+        var sumAmmount = getSum();
+        givenField.text(floatToNice(givenFloat));
+        $('#repeatField').text(floatToNice(givenFloat-sumAmmount));
+    }
+
+    function resetGiven() {
+        var givenField = $('#givenField');
+        givenField.attr('data-given', '0');
+        givenField.text(floatToNice(0.0));
+        $('#repeatField').text(floatToNice(0.0))
+    }
+
+    function deleteFromCart(event) {
+        $(event.currentTarget).parent().parent().detach();
+        recalculateSum();
+    }
+
+    function openDrawer() {
+        if (getSum() === 0) {
+            finish();
+            return;
+        }
+        if (!opened){
+            opened = true;
+            $.post('{% url 'kasse:open_drawer' %}', {}, function(){
+                if (!aborted) {
+                    finish();
+                } else {
+                    aborted = false;
+                }
+                opened = false;
+            })
+        }
+    }
+
+    function finish() {
+        var products = [];
+        $('#cart').find('tbody').find('tr').each(function (e) {
+            products.push({
+                name: $(this).find('td').first().text(),
+                price: parseFloat($(this).attr('data-price'))
+            })
+        });
+        $.post('{% url 'kasse:add_sale' %}', {products: JSON.stringify(products)}, function (){
+            window.location.reload()
+        });
+    }
+
+    $('#menu-container').find('.menu-item').on('click', function () {
+        var this_element = $(this);
+        var name = this_element.attr('data-name');
+        var price = parseFloat(this_element.attr('data-price'));
+        var price_nice = this_element.find('.price-nice').text();
+        var delete_from_cart_button = $('<button class="btn btn-xs btn-danger"><i class="glyphicon glyphicon-minus"></i></button>');
+        delete_from_cart_button.on('click', deleteFromCart);
+        var table = $('#cart');
+        var cart_row = $('<tr data-price="'+price+'"><td>'+name+'</td><td style="text-align: right;">'+price_nice+'</td><td class="action"></td></tr>');
+        cart_row.find('.action').append(delete_from_cart_button);
+        table.find('tbody').append(cart_row);
+        recalculateSum();
+    });
+    $.ajaxSetup({
+        error: function (x, status, error) {
+            var self = this;
+            var alertText = '';
+            switch (this.url) {
+                case '/ajax/add_sale':
+                    alertText = 'Die Buchung konnte nicht abgeschlossen werden, da die Verbindung zur Kasse unterbrochen wurde.';
+                    break;
+                case '/ajax/open_drawer':
+                    alertText = 'Die Kassenschublade konnte nicht geöffnet werden, da die Verbindung zur Kasse unterbrochen wurde.';
+                    break;
+                default:
+                    alertText = 'Die Aktion konnte nicht ausgeführt werden, da die Verbindung zur Kasse unterbrochen wurde.';
+                    break;
+            }
+            var alertModal = $('#alertModal');
+            var alert = $('<div class="alert alert-danger" role="alert"></div>');
+            alert.append('<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>');
+            alert.append('<h4>Verbindung unterbrochen!</h4>');
+            alert.append('<p>'+alertText+'</p>');
+            alert.append('<br>');
+            alert.append('<button class="btn btn-default" data-dismiss="modal">Schließen</button>');
+            var retryButton = $('<button class="btn btn-default">Erneut versuchen</button>');
+            retryButton.on('click', function () {
+                alertModal.modal('hide');
+                alertModal.on('hidden.bs.modal', function () {
+                    alertModal.off('hidden.bs.modal');
+                    $.ajax(self);
+                });
+            });
+            alert.append(retryButton);
+            alertModal.empty();
+            alertModal.append(alert);
+            alertModal.modal('show');
+        }
+    })
+    </script>
+{% endblock %}

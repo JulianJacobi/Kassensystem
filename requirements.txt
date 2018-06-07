@@ -1,0 +1,4 @@
+Django==2.0.1
+netifaces==0.10.6
+django_money==0.12.3
+debinterface==3.3.0
