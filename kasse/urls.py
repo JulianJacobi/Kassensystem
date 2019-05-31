@@ -28,6 +28,10 @@ urlpatterns = [
     path('settings/products/<int:product_id>/edit', edit_product_view, name="edit_product"),
     path('settings/products/<int:product_id>/delete', remove_product, name="delete_product"),
 
+    path('settings/productCategories/add', add_product_category_view, name="add_product_category"),
+    path('settings/productCategories/<int:product_category_id>/edit', edit_product_category_view, name="edit_product_category"),
+    path('settings/productCategories/<int:product_category_id>/remove', delete_product_category_view, name="remove_product_category"),
+
     path('settings/events', events_view, name="events"),
     path('settings/events/create', create_event_view, name="create_event"),
     path('settings/events/<int:event_id>', event_view, name="event"),

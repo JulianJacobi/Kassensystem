@@ -5,8 +5,17 @@ import json
 # Create your models here.
 
 
+class ProductCategory(models.Model):
+    name = models.CharField('Name', max_length=100)
+
+    def __str__(self):
+        return self.name
+
+
 class Product(models.Model):
     name = models.CharField('Name', max_length=50)
+    category = models.ForeignKey(to=ProductCategory, on_delete=models.SET_DEFAULT, related_name='products',
+                                 blank=True, default=None, null=True)
     price = MoneyField('Preis', decimal_places=2, max_digits=20, default_currency='EUR')
 
 

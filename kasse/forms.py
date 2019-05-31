@@ -29,7 +29,14 @@ class ProductForm(BootstrapForm):
 
     class Meta:
         model = Product
-        fields = ['name', 'price']
+        fields = ['name', 'category', 'price']
+
+
+class ProductCategoryForm(BootstrapForm):
+
+    class Meta:
+        model = ProductCategory
+        fields = ['name']
 
 
 class EventForm(BootstrapForm):

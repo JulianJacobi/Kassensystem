@@ -171,8 +171,10 @@ def add_table_set_view(request):
 @login_required
 def product_list_view(request):
     products = models.Product.objects.all()
+    product_categories = models.ProductCategory.objects.all()
     return render(request, 'settings/product_list.html', context={'title': 'Produkte',
-                                                                  'products': products})
+                                                                  'products': products,
+                                                                  'product_categories': product_categories})
 
 
 @login_required
@@ -213,6 +215,48 @@ def remove_product(request, product_id):
             product = models.Product.objects.get(id=product_id)
             product.delete()
     except models.Product.DoesNotExist:
+        pass
+    return redirect('kasse:product_list')
+
+
+@login_required
+def add_product_category_view(request):
+    if request.method == 'POST':
+        form = forms.ProductCategoryForm(data=request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('kasse:product_list')
+    else:
+        form = forms.ProductCategoryForm()
+    return render(request, 'settings/product_category_form.html', context={'title': 'Produktkategorie erstellen',
+                                                                           'form': form})
+
+
+@login_required
+def edit_product_category_view(request, product_category_id):
+    try:
+        product_category = models.ProductCategory.objects.get(id=product_category_id)
+        if request.method == 'POST':
+            form = forms.ProductCategoryForm(instance=product_category, data=request.POST)
+            if form.is_valid():
+                form.save()
+                return redirect('kasse:product_list')
+        else:
+            form = forms.ProductCategoryForm(instance=product_category)
+        return render(request, 'settings/product_category_form.html', context={'title': 'Produktkategorie bearbeiten',
+                                                                               'form': form,
+                                                                               'edit': True})
+    except models.ProductCategory.DoesNotExist:
+        redirect('kasse:product_list')
+
+
+@login_required
+def delete_product_category_view(request, product_category_id):
+    try:
+        product_category = models.ProductCategory.objects.get(id=product_category_id)
+        if request.method == 'POST':
+            product_category.delete()
+    except models.ProductCategory.DoesNotExist:
         pass
     return redirect('kasse:product_list')
 

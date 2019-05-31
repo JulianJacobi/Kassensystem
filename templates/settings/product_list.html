@@ -9,6 +9,7 @@
     <tr>
         <th>Name</th>
         <th>Preis</th>
+        <th>Kategorie</th>
         <th style="text-align: right;">Aktionen</th>
     </tr>
     </thead>
@@ -17,6 +18,13 @@
     <tr>
     <td>{{ product.name }}</td>
     <td>{{ product.price|localize }}</td>
+    <td>
+        {% if product.category %}
+            {{ product.category.name }}
+        {% else %}
+            Unkategorisiert
+        {% endif %}
+    </td>
     <td style="text-align: right;">
         <a href="{% url 'kasse:edit_product' product.id %}"><button class="btn btn-default btn-xs"><i class="glyphicon glyphicon-edit"></i></button></a>
         <a href="#" class="btn btn-danger btn-xs" data-toggle="modal" data-target="#product{{ product.id }}_delete_modal"><i class="glyphicon glyphicon-trash"></i></a>
@@ -46,6 +54,52 @@
     {% if not products %}
         <tr><td colspan="100" style="text-align: center;">
             Keine Produkte vorhanden.
+        </td></tr>
+    {% endif %}
+    </tbody>
+    </table>
+    <h1>Kategorien</h1>
+    <a href="{% url 'kasse:add_product_category' %}" class="btn btn-primary">Produktkategorie erstellen</a>
+    <table class="table table-hover table-striped">
+    <thead>
+    <tr>
+        <th>Name</th>
+        <th style="text-align: right">Aktionen</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for category in product_categories %}
+        <tr>
+            <td>{{ category.name }}</td>
+            <td style="text-align: right;">
+                <a href="{% url 'kasse:edit_product_category' category.id %}" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-edit"></span></a>
+                <button class="btn btn-danger btn-xs" data-toggle="modal" data-target="#category{{ category.id }}_delete_modal"><span class="glyphicon glyphicon-trash"></span></button>
+                <div class="modal fade" id="category{{ category.id }}_delete_modal" tabindex="-1" role="dialog" aria-labelledby="category{{ category.id }}_delete_model_label" style="text-align: left;">
+                    <form action="{% url 'kasse:remove_product_category' category.id %}" method="post">
+                        {% csrf_token %}
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                    <h4 class="modal-title" id="category{{ category.id }}_delete_model_label">Produktkategorie löschen</h4>
+                                </div>
+                                <div class="modal-body">
+                                    Soll die Produktkategorie "{{ category.name }}" wirklich gelöscht werden?
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">Abbrechen</button>
+                                    <button type="submit" class="btn btn-danger">Löschen</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </td>
+        </tr>
+    {% endfor %}
+    {% if not product_categories %}
+        <tr><td colspan="100" style="text-align: center">
+            Keine Produktkategorien vorhanden
         </td></tr>
     {% endif %}
     </tbody>
