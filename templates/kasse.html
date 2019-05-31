@@ -3,6 +3,10 @@
 {% block settings_content %}
     <div class="container-fluid">
         {% for menu in menus %}<a href="{% url 'kasse:single_menu' menu.id %}"><button class="btn btn-default btn-menu">{{ menu.name }}</button></a>{% endfor %}
+        <br>
+        <hr/>
+        <h4>Tischanordnungen</h4>
+        {% for tableset in tablesets %}<a href="{% url 'kasse:tableset' tableset.id %}"><button class="btn btn-default btn-menu">{{ tableset.name }}</button></a>{% endfor %}
     </div>
 
 {% endblock %}

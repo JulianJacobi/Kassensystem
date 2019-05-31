@@ -4,7 +4,7 @@
 
 {% block body %}
     <div class="container-fluid container-kasse">
-        <div id="menu-container" class="col-sm-8 col-lg-9">
+        <div id="menu-container" class="col-sm-8 col-lg-9" style="min-height: 100vh;">
             {% for menuitem in menu.menuitem_set.all %}<button class="btn btn-{{ menuitem.color }} btn-menu menu-item" data-product-id="{{ menuitem.product.id }}" data-color="{{ menuitem.color }}" data-name="{{ menuitem.product.name }}" data-price="{{ menuitem.product.price|float|unlocalize }}">{{ menuitem.product.name }}<br><b class="price-nice">{{ menuitem.product.price }}</b></button>{% endfor %}
         </div>
         <div class="col-sm-4 col-lg-3" style="height: 100vh; max-height: 100vh; overflow-y: scroll;position: fixed; right: 0;">

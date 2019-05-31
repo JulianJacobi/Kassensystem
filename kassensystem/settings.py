@@ -149,13 +149,9 @@ try:
         GPIO_AVAILABLE = True
         GPIO_OPEN = config.getint('GPIO', 'open', fallback=None)
         GPIO_DETECTION = config.getint('GPIO', 'detection', fallback=None)
-        if GPIO_OPEN is not None:
-            RPi.GPIO.setup(GPIO_OPEN, RPi.GPIO.OUT)
-        else:
+        if GPIO_OPEN is None:
             GPIO_AVAILABLE = False
-        if GPIO_DETECTION is not None:
-            RPi.GPIO.setup(GPIO_DETECTION, RPi.GPIO.IN)
-        else:
+        if GPIO_DETECTION is None:
             GPIO_AVAILABLE = False
 except ImportError:
     GPIO_AVAILABLE = False

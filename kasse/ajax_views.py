@@ -4,8 +4,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from . import models
 import json
-from kassensystem import settings
-import time
+from django.conf import settings
+from .lib import gpio
 
 
 @login_required
@@ -24,6 +24,42 @@ def update_menu_view(request, menu_id):
                                                sort=menu_entry['sort'])
             return HttpResponse('', 200)
     except models.Menu.DoesNotExist:
+        return HttpResponse('', 404)
+
+
+@login_required
+@csrf_exempt
+def update_tableset_view(request, tableset_id):
+    try:
+        tableset = models.TableSet.objects.get(id=tableset_id)
+        if request.method == 'POST':
+            data = json.loads(request.POST['data'])
+            ids = []
+            uuid_ids = {}
+            for element in data:
+                try:
+                    table = tableset.table_set.get(id=element.get('id', None))
+                    table.pos_x = element.get('pos', {}).get('x', 0.0)
+                    table.pos_y = element.get('pos', {}).get('y', 0.0)
+                    table.size_x = element.get('size', {}).get('width', 0.1)
+                    table.size_y = element.get('size', {}).get('height', 0.1)
+                except models.Table.DoesNotExist:
+                    table = models.Table(name=element.get('name', ''),
+                                         pos_x=element.get('pos', {}).get('x', 0.0),
+                                         pos_y=element.get('pos', {}).get('y', 0.0),
+                                         size_x=element.get('size', {}).get('width', 0.1),
+                                         size_y=element.get('size', {}).get('height', 0.1),
+                                         table_set_id=tableset.id)
+                table.save()
+                ids.append(table.id)
+                uuid_ids[element.get('uuid', '')] = table.id
+
+            for table in tableset.table_set.all():
+                if table.id not in ids:
+                    table.delete()
+
+            return JsonResponse(uuid_ids)
+    except models.TableSet.DoesNotExist:
         return HttpResponse('', 404)
 
 
@@ -48,12 +84,7 @@ def search_products(request):
 def open_drawer(request):
     if request.method == 'POST':
         if settings.GPIO_AVAILABLE and settings.GPIO_OPEN is not None and settings.GPIO_DETECTION is not None:
-            import RPi.GPIO as gpio
-            gpio.output(settings.GPIO_OPEN, gpio.HIGH)
-            time.sleep(0.2)
-            gpio.output(settings.GPIO_OPEN, gpio.LOW)
-            while gpio.input(settings.GPIO_DETECTION) == gpio.LOW:
-                time.sleep(0.5)
+            gpio.open_drawer()
             return HttpResponse('OK', status=200)
         else:
             return HttpResponse('Drawer could not be opened', status=400)

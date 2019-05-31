@@ -143,7 +143,7 @@
     $(function () {
         $('#product-search-field').on('keyup', function () {
             $.getJSON('{% url 'kasse:search_products' %}', {'q': $(this).val()}, function(data){
-                // ToDo rebuild product list
+                // git ToDo rebuild product list
                 var results_container = $('#product-search-results');
                 results_container.text('');
                 for (var i in data) {

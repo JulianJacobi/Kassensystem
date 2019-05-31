@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% load l10n %}
+{% load formats %}
+
+{% block body %}
+    <div class="container-fluid container-kasse">
+        <div id="menu-container" class="col-sm-8 col-lg-9" style="min-height: 100vh;">
+            <h1><b>{{ table.name }}</b></h1>
+            {% for menuitem in menu.menuitem_set.all %}<a href="{% url 'kasse:add_product_to_table' table.table_set_id table.id %}?productId={{ menuitem.product.id }}"><button class="btn btn-{{ menuitem.color }} btn-menu menu-item">{{ menuitem.product.name }}<br><b class="price-nice">{{ menuitem.product.price }}</b></button></a>{% endfor %}
+        </div>
+        <div class="col-sm-4 col-lg-3" style="height: 100vh; max-height: 100vh; overflow-y: scroll;position: fixed; right: 0;">
+            <div class="btn-group btn-group-justified" role="group">
+                <div class="btn-group" role="group">
+                    <a href="{% url "kasse:tableset" table.table_set_id %}" class="btn btn-primary btn-menu">Zurück</a>
+                </div>
+                <div class="btn-group" role="group">
+                    <button class="btn btn-success btn-menu" data-toggle="modal" data-target="#finalizeModal">Bezahlen</button>
+                </div>
+            </div>
+            <h3>Wahrenkorb</h3>
+            <table class="table" id="cart">
+                <thead>
+                <tr>
+                    <th>Produkt</th>
+                    <th style="text-align: right;">Preis</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                    {% for booking in bookings %}
+                        <tr data-price="{{ booking.price|unlocalize }}">
+                            <td>{{ booking.name }}</td>
+                            <td style="text-align: right">{{ booking.price|floatformat:2 }} €</td>
+                            <td><a href="{% url 'kasse:remove_product_from_table' table.table_set_id table.id %}?index={{ forloop.counter0 }}" class="btn btn-danger btn-xs"><span class="glyphicon glyphicon-minus"></span></a></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                <tr>
+                    <td style="border-top-width: 2px;"><b>Summe</b></td>
+                    <td style="text-align: right; border-top-width: 2px;"><b id="sum-field">{{ total|floatformat:2 }} €</b></td>
+                    <td style="border-top-width: 2px;"></td>
+                </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <div class="modal fade" id="finalizeModal" tabindex="-1" role="dialog" aria-labelledby="finalizeModalLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="finalizeModalLabel">Bezahlen</h4>
+                </div>
+                <div class="modal-body" style="min-height: 9.5cm;">
+                    <table class="given-buttonfield" style="position: absolute;">
+                        <tr>
+                            <td><button class="btn btn-default btn-menu" onclick="givenConcat('7')">7</button></td>
+                            <td><button class="btn btn-default btn-menu" onclick="givenConcat('8')">8</button></td>
+                            <td><button class="btn btn-default btn-menu" onclick="givenConcat('9')">9</button></td>
+                            <td rowspan="2"><button class="btn btn-danger btn-menu double-button rotate" data-dismiss="modal">Abbrechen</button></td>
+                        </tr>
+                        <tr>
+                            <td><button class="btn btn-default btn-menu" onclick="givenConcat('4')">4</button></td>
+                            <td><button class="btn btn-default btn-menu" onclick="givenConcat('5')">5</button></td>
+                            <td><button class="btn btn-default btn-menu" onclick="givenConcat('6')">6</button></td>
+                        </tr>
+                        <tr>
+                            <td><button class="btn btn-default btn-menu" onclick="givenConcat('1')">1</button></td>
+                            <td><button class="btn btn-default btn-menu" onclick="givenConcat('2')">2</button></td>
+                            <td><button class="btn btn-default btn-menu" onclick="givenConcat('3')">3</button></td>
+                            <td rowspan="2">
+                                {% if gpio_available %}
+                                    <button class="btn btn-success btn-menu double-button rotate" onclick="openDrawer()">
+                                        Kasse öffnen
+                                    </button>
+                                {% else %}
+                                    <button class="btn btn-success btn-menu double-button rotate" onclick="finish()">
+                                        Fertig
+                                    </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><button class="btn btn-default btn-menu" onclick="givenConcat('0')">0</button></td>
+                            <td colspan="2"><button class="btn btn-default btn-menu double-button" onclick="resetGiven()">Korrektur</button></td>
+                        </tr>
+                    </table>
+                    <div id="finalizeCartTarget" style="margin-left: 9cm; height: 8cm; overflow-y: scroll;">
+                        <table class="table" id="cart">
+                            <thead>
+                            <tr>
+                                <th>Produkt</th>
+                                <th style="text-align: right;">Preis</th>
+                                <th></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                                {% for booking in bookings %}
+                                    <tr data-price="{{ booking.price|unlocalize }}">
+                                        <td>{{ booking.name }}</td>
+                                        <td style="text-align: right">{{ booking.price|floatformat:2 }} €</td>
+                                        <td><a href="{% url 'kasse:remove_product_from_table' table.table_set_id table.id %}?index={{ forloop.counter0 }}" class="btn btn-danger btn-xs"><span class="glyphicon glyphicon-minus"></span></a></td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                            <tr>
+                                <td style="border-top-width: 2px;"><b>Summe</b></td>
+                                <td style="text-align: right; border-top-width: 2px;"><b id="sum-field">{{ total|floatformat:2 }} €</b></td>
+                                <td style="border-top-width: 2px;"></td>
+                            </tr>
+                            <tr><td>Gegeben</td><td style="text-align: right;"><span id="givenField" data-given="0">0,00 €</span></td><td></td></tr>
+                            <tr><td><b>Rückgeld</b></td><td style="text-align: right;"><b id="repeatField">0,00 €</b></td><td></td></tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+    var opened = false;
+    var aborted = false;
+    function floatToNice(float) {
+        return (float.toFixed(2)+' €').replace('.',',');
+    }
+    function resetGiven() {
+        var givenField = $('#givenField');
+        givenField.attr('data-given', '0');
+        givenField.text(floatToNice(0.0));
+        $('#repeatField').text(floatToNice(0.0))
+    }
+    function givenConcat(number) {
+        var givenField = $('#givenField');
+        var givenString = givenField.attr('data-given');
+        givenString = givenString+number;
+        givenField.attr('data-given', givenString);
+        var givenFloat = parseFloat(givenString)/100;
+        var sumAmmount = {{ total|unlocalize }};
+        givenField.text(floatToNice(givenFloat));
+        $('#repeatField').text(floatToNice(givenFloat-sumAmmount));
+    }
+    $(function () {
+        $('#finalizeModal').on('hide.bs.modal', resetGiven)
+    });
+    function openDrawer() {
+        if (getSum() === 0) {
+            finish();
+            return;
+        }
+        if (!opened){
+            opened = true;
+            $.post('{% url 'kasse:open_drawer' %}', {}, function(){
+                if (!aborted) {
+                    finish();
+                } else {
+                    aborted = false;
+                }
+                opened = false;
+            })
+        }
+    }
+
+    function finish() {
+        window.location = "{% url 'kasse:book_table' table.table_set_id table.id %}";
+    }
+    </script>
+{% endblock %}

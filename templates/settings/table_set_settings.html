@@ -1,0 +1,205 @@
+{% extends 'settings/base.html' %}
+{% load l10n %}
+
+{% block settings_content %}
+    <div class="alert alert-success pull-right" role="alert" id="saved-alert" style="display: none;"><b>Erfolgreich gespeichert!</b></div>
+    <h1>
+        Tischanordnung "{{ table_set.name }}"
+        <div class="btn-group">
+            <button class="btn btn-danger" data-toggle="modal" data-target="#table_set{{ table_set.id }}_delete_modal">
+                <span class="glyphicon glyphicon-trash"></span>
+                Tischanordnung löschen
+            </button>
+            <a href="{% url 'kasse:edit_table_set_data' table_set.id %}" class="btn btn-warning">
+                <span class="glyphicon glyphicon-edit"></span>
+                Tischanordnung beareiten
+            </a>
+            <button class="btn btn-primary" id="save-btn">
+                <span class="glyphicon glyphicon-save"></span>
+                Speichern
+            </button>
+            <button class="btn btn-success" data-toggle="modal" data-target="#new-table-modal">
+                <span class="glyphicon glyphicon-plus"></span>
+                Tisch hinzufügen
+            </button>
+        </div>
+    </h1>
+    <br>
+    <div class="col-sm-12 col-lg-12" id="table-container" style="overflow-y: scroll; position: relative;">
+        {% for table in table_set.table_set.all %}
+            <div class="kasse-table" data-id="{{ table.id }}" data-name="{{ table.name }}" data-size='{"width": "{{ table.size_x|unlocalize }}", "height": "{{ table.size_y|unlocalize }}"}' data-pos='{"x": "{{ table.pos_x|unlocalize }}", "y": "{{ table.pos_y|unlocalize }}"}'>
+                {{ table.name }}
+                <a href="#" onclick="$(this).parent().remove()"><span class="glyphicon glyphicon-trash"></span></a>
+            </div>
+        {% endfor %}
+    </div>
+    <div id="hidden-area" style="display: none;"></div>
+    <div class="modal fade" tabindex="-1" role="dialog" aria-labelledby="table-add-modal-title" id="new-table-modal">
+        <div class="modal-dialog modal-sm" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="table-add-modal-title">Tisch hinzufügen</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="new-table-name">Name:</label>
+                        <input id="new-table-name" class="form-control" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-danger pull-left" data-dismiss="modal">Abbrechen</button>
+                    <button class="btn btn-success" id="new-table-btn">Hinzufügen</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="table_set{{ table_set.id }}_delete_modal" tabindex="-1" role="dialog" aria-labelledby="table_set{{ table_set.id }}_delete_model_label">
+        <form action="{% url 'kasse:delete_table_set' table_set.id %}" method="post">
+            {% csrf_token %}
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="table_set{{ table_set.id }}_delete_model_label">Tischanordnung entfernen</h4>
+                    </div>
+                    <div class="modal-body">
+                        Soll die Tischanordnung "{{ table_set.name }}" wirklich entfernt werden?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Abbrechen</button>
+                        <button type="submit" class="btn btn-danger">Entfernen</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <script type="application/javascript">
+    $(function () {
+        set_table_container_size();
+        $('.kasse-table').resizable({
+            containment: $('#table-container')
+        });
+        $('.kasse-table').draggable({
+            containment: $('#table-container'),
+            scroll: false
+        });
+        $('.kasse-table').on('resizestop', function () {
+            set_size_and_position_data(this)
+        });
+        $('.kasse-table').on('dragstop', function () {
+            set_size_and_position_data(this)
+        });
+        $(window).on('resize', function (e) {
+            if (e.originalEvent.target === window) {
+                set_table_container_size();
+            }
+        });
+        $('#new-table-modal').on('show.bs.modal', function () {
+            $('#new-table-name').val('');
+        }).on('shown.bs.modal', function () {
+            $('#new-table-name').focus();
+        });
+        $('#new-table-btn').on('click', function () {
+            $('#new-table-modal').modal('hide');
+            var name = $('#new-table-name').val();
+            var table_container = $('#table-container');
+
+            var new_table = $('<div>'+name+'</div>');
+            new_table.addClass('kasse-table');
+            new_table.data('name', name);
+            new_table.width('100px');
+            new_table.height('100px');
+            new_table.resizable({
+                containment: table_container
+            });
+            new_table.draggable({
+                containment: table_container,
+                scroll: false
+            });
+            new_table.css({top: '0', left: '0', position: 'absolute'});
+            new_table.data('uuid', (new UUID(4)).format());
+            var delete_button = $('<a href="#"> <span class="glyphicon glyphicon-trash"></span></a>');
+            delete_button.on('click', delete_element);
+            new_table.append(delete_button);
+            new_table.on('resizestop', function () {
+                set_size_and_position_data(this)
+            });
+            new_table.on('dragstop', function () {
+                set_size_and_position_data(this)
+            });
+            set_size_and_position_data(new_table);
+            table_container.append(new_table);
+            console.log('Add Table '+name);
+        });
+        $('#save-btn').on('click', function () {
+            var table_container = $('#table-container');
+            var tables = [];
+            table_container.find('.kasse-table').each(function () {
+                var table = $(this);
+                var data = $.extend({}, table.data());
+                var allowed_keys = ['name', 'id', 'pos', 'size', 'uuid'];
+                for (var key in data) {
+                    if (data.hasOwnProperty(key)) {
+                        if (allowed_keys.indexOf(key) === -1) {
+                            delete data[key];
+                        }
+                    }
+                }
+                tables.push(data)
+            });
+            $.post('{% url 'kasse:ajax_update_tableset' table_set.id %}', {data: JSON.stringify(tables)}, function(data) {
+                $('#table-container').find('.kasse-table').each(function () {
+                    var table = $(this);
+                    var uuid = table.data('uuid');
+                    if (data.hasOwnProperty(uuid)) {
+                        table.data('id', data[uuid])
+                    }
+                });
+                $('#saved-alert').show();
+                setTimeout(function () {
+                   $('#saved-alert').hide()
+                }, 3000);
+            });
+        });
+    });
+    function set_table_container_size() {
+        var document_height = $(document).height();
+        var table_container = $('#table-container');
+        var container_y_pos = table_container.position().top;
+        var new_height = document_height - container_y_pos - 20;
+        table_container.height(new_height+'px');
+        var table_container_width = table_container.width();
+
+        // resize table objects
+        table_container.find('.kasse-table').each(function () {
+            var table = $(this);
+            var data = table.data();
+            table.css({
+                left: (data.pos.x * table_container_width) + 'px',
+                top: (data.pos.y * new_height) + 'px',
+                width: (data.size.width * table_container_width) + 'px',
+                height: (data.size.height * new_height) + 'px'
+            });
+        })
+    }
+    function set_size_and_position_data(element) {
+        var jq_element = $(element).first();
+        var table_container = $('#table-container');
+        var x_factor = 1/table_container.width();
+        var y_factor = 1/table_container.height();
+        var size = {};
+        size.width = jq_element.width() * x_factor;
+        size.height = jq_element.height() * y_factor;
+        var pos = {};
+        pos.x = jq_element.position().left * x_factor;
+        pos.y = jq_element.position().top * y_factor;
+        jq_element.data('size', size);
+        jq_element.data('pos', pos);
+    }
+    function delete_element() {
+        $(this).parent().remove();
+    }
+    </script>
+
+{% endblock %}

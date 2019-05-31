@@ -1,4 +1,4 @@
-dev.container-kasse {
+div.container-kasse {
     position: fixed;
     overflow: hidden;
 }
@@ -9,6 +9,12 @@ dev.container-kasse {
     white-space: normal;
     margin-right: 0.1cm;
     margin-bottom: 0.1cm;
+}
+
+a.btn-menu {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .btn-add {
@@ -24,6 +30,32 @@ dev.container-kasse {
 
 .form-control.btn-menu {
     width: 100% !important;
+}
+
+div#table-container {
+    background: #9d9d9d;
+    padding: 0;
+    margin: 0;
+}
+
+div.kasse-table {
+    background: #0b58a2;
+    color: white;
+    position: absolute;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+div.kasse-table a {
+    color: white;
+    text-decoration: none;
+}
+
+div.kasse-table a:hover {
+    color: white;
+    text-decoration: none;
 }
 
 #delete-area {

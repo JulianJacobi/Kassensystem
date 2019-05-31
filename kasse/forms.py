@@ -18,6 +18,13 @@ class MenuForm(BootstrapForm):
         fields = ['name']
 
 
+class TableSetForm(BootstrapForm):
+
+    class Meta:
+        model = TableSet
+        fields = ['name', 'menu']
+
+
 class ProductForm(BootstrapForm):
 
     class Meta:

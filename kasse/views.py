@@ -1,12 +1,11 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, reverse
 from django.contrib.auth.decorators import login_required
 from . import forms
 from . import models
-from kassensystem import settings
 from django.contrib.auth import models as auth_models
 import json
 from datetime import timedelta
-from kassensystem.settings import ETHERNET_PORT
+from django.conf import settings
 import netifaces
 from kasse.lib import worker_com
 import debinterface
@@ -15,8 +14,10 @@ import debinterface
 @login_required
 def kasse_view(request):
     menus = models.Menu.objects.all()
+    tablesets = models.TableSet.objects.all()
     return render(request, 'kasse.html', context={'title': 'Kasse',
-                                                  'menus': menus})
+                                                  'menus': menus,
+                                                  'tablesets': tablesets})
 
 
 @login_required
@@ -31,10 +32,112 @@ def menu_view(request, menu_id):
 
 
 @login_required
+def tableset_view(request, table_set_id):
+    try:
+        tableset = models.TableSet.objects.get(id=table_set_id)
+        return render(request, 'tableset.html', context={'title': 'Tischanordnung {}'.format(tableset.name),
+                                                         'tableset': tableset})
+    except models.TableSet.DoesNotExist:
+        return redirect('kasse:kasse')
+
+
+@login_required
+def table_menu_view(request, table_set_id, table_id):
+    try:
+        tableset = models.TableSet.objects.get(id=table_set_id)
+        table = tableset.table_set.get(id=table_id)
+        menu = tableset.menu
+
+        if table.bookings != '':
+            bookings = json.loads(table.bookings)
+        else:
+            bookings = []
+
+        total = 0.0
+        for booking in bookings:
+            total += booking.get('price', 0.0)
+
+        return render(request, 'table_menu.html', context={'title': 'Tisch {}'.format(table.name),
+                                                           'table': table,
+                                                           'bookings': bookings,
+                                                           'total': total,
+                                                           'menu': menu})
+    except models.TableSet.DoesNotExist:
+        return redirect('kasse:kasse')
+    except models.Table.DoesNotExist:
+        return redirect('kasse:tableset', table_set_id=table_set_id)
+
+
+@login_required
+def add_product_to_table_view(request, table_set_id, table_id):
+    try:
+        tableset = models.TableSet.objects.get(id=table_set_id)
+        table = tableset.table_set.get(id=table_id)
+        product = models.Product.objects.get(id=request.GET.get('productId', default=None))
+        if table.bookings != '':
+            bookings = json.loads(table.bookings)
+        else:
+            bookings = []
+        bookings.append({'name': product.name, 'price': float(product.price.amount)})
+        table.bookings = json.dumps(bookings)
+        table.save()
+    except models.TableSet.DoesNotExist:
+        return redirect('kasse:kasse')
+    except models.Table.DoesNotExist:
+        return redirect('kasse:tableset', table_set_id=table_set_id)
+    except models.Product.DoesNotExist:
+        pass
+    return redirect('kasse:table_menu', table_set_id=table_set_id, table_id=table_id)
+
+
+@login_required
+def remove_product_from_table_view(request, table_set_id, table_id):
+    try:
+        tableset = models.TableSet.objects.get(id=table_set_id)
+        table = tableset.table_set.get(id=table_id)
+        index = int(request.GET.get('index', default=None))
+        all = int(request.GET.get('all', default=False))
+        if index is not None and table.bookings != '':
+            bookings = json.loads(table.bookings)
+            bookings.pop(index)
+            table.bookings = json.dumps(bookings)
+            table.save()
+        if all:
+            table.bookings = ""
+            table.save()
+        return redirect('kasse:table_menu', table_set_id=table_set_id, table_id=table_id)
+    except models.TableSet.DoesNotExist:
+        return redirect('kasse:kasse')
+    except models.Table.DoesNotExist:
+        return redirect('kasse:tableset', table_set_id=table_set_id)
+
+
+@login_required
+def book_table_view(request, table_set_id, table_id):
+    try:
+        tableset = models.TableSet.objects.get(id=table_set_id)
+        table = tableset.table_set.get(id=table_id)
+        account_entry = models.AccountEntry(type='sale',
+                                            comment='billing:{}'.format(table.bookings),
+                                            amount=table.total(),
+                                            user=request.user)
+        account_entry.save()
+        table.bookings = ''
+        table.save()
+        return redirect('kasse:tableset', table_set_id=table_set_id)
+    except models.TableSet.DoesNotExist:
+        return redirect('kasse:kasse')
+    except models.Table.DoesNotExist:
+        return redirect('kasse:tableset', table_set_id=table_set_id)
+
+
+@login_required
 def settings_view(request):
     menus = models.Menu.objects.all()
+    table_sets = models.TableSet.objects.all()
     return render(request, 'settings/checkout_list.html', context={'title': 'Einstellungen',
-                                                                   'menus': menus})
+                                                                   'menus': menus,
+                                                                   'table_sets': table_sets})
 
 
 @login_required
@@ -49,6 +152,20 @@ def add_menu_view(request):
 
     return render(request, 'settings/menu_form.html', context={'title': 'Menu erstellen',
                                                                'form': form})
+
+
+@login_required
+def add_table_set_view(request):
+    if request.method == 'POST':
+        form = forms.TableSetForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('kasse:settings')
+    else:
+        form = forms.TableSetForm()
+
+    return render(request, 'settings/table_set_form.html', context={'title': 'Tischanordnung erstellen',
+                                                                    'form': form})
 
 
 @login_required
@@ -112,12 +229,53 @@ def menu_edit_view(request, menu_id):
 
 
 @login_required
+def table_set_edit_view(request, table_set_id):
+    try:
+        table_set = models.TableSet.objects.get(id=table_set_id)
+        return render(request, 'settings/table_set_settings.html', context={
+            'title': 'Tischanordnung "{}"'.format(table_set.name),
+            'table_set': table_set,
+        })
+
+    except models.TableSet.DoesNotExist:
+        return redirect('kasse:settings')
+
+
+@login_required
+def table_set_data_edit_view(request, table_set_id):
+    try:
+        table_set = models.TableSet.objects.get(id=table_set_id)
+        if request.method == 'POST':
+            form = forms.TableSetForm(instance=table_set, data=request.POST)
+            if form.is_valid():
+                form.save(commit=True)
+                return redirect(reverse('kasse:edit_table_set', kwargs={'table_set_id': table_set.id}))
+        else:
+            form = forms.TableSetForm(instance=table_set)
+        return render(request, 'settings/table_set_form.html', context={'title': 'Tischanordnung bearbeiten',
+                                                                        'form': form})
+    except models.TableSet.DoesNotExist:
+        return redirect('kasse:settings')
+
+
+@login_required
 def menu_delete_view(request, menu_id):
     try:
         if request.method == 'POST':
             menu = models.Menu.objects.get(id=menu_id)
             menu.delete()
     except models.Menu.DoesNotExist:
+        pass
+    return redirect('kasse:settings')
+
+
+@login_required
+def table_set_delete_view(request, table_set_id):
+    try:
+        if request.method == 'POST':
+            table_set = models.TableSet.objects.get(id=table_set_id)
+            table_set.delete()
+    except models.TableSet.DoesNotExist:
         pass
     return redirect('kasse:settings')
 
@@ -301,9 +459,9 @@ def general_settings_view(request):
             worker_com.deactivate_interface()
         return redirect('kasse:general_settings')
 
-    if ETHERNET_PORT is not None:
+    if settings.ETHERNET_PORT is not None:
         interfaces = debinterface.Interfaces()
-        adapter = interfaces.getAdapter(ETHERNET_PORT)
+        adapter = interfaces.getAdapter(settings.ETHERNET_PORT)
         if adapter is not None:
             context['ip_address'] = adapter.get_attr('address')
             context['subnet'] = adapter.get_attr('netmask')

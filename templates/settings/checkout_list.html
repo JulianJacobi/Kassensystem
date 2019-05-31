@@ -6,5 +6,11 @@
     {% endfor %}
 
     <a href="{% url 'kasse:add_menu' %}"><button class="btn btn-primary btn-menu">Menü hinzufügen</button></a>
+    <hr>
+    {% for table_set in table_sets %}
+        <a href="{% url 'kasse:edit_table_set' table_set.id %}"><button class="btn btn-default btn-menu">{{ table_set.name }}</button></a>
+    {% endfor %}
+
+    <a href="{% url 'kasse:add_table_set' %}"><button class="btn btn-info btn-menu">Tisch- anordnung hinzufügen</button></a>
 {% endblock %}
 

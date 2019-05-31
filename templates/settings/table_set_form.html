@@ -1,7 +1,7 @@
 {% extends 'settings/base.html' %}
 
 {% block settings_content %}
-    <h1>Menü {% if edit %}bearbeiten{% else %}erstellen{% endif %}</h1>
+    <h1>Tischanordnung {% if edit %}bearbeiten{% else %}erstellen{% endif %}</h1>
     <br>
     <form action="{{ request.path }}" method="post" class="form-horizontal">
         {% include 'form.html' with form=form %}
