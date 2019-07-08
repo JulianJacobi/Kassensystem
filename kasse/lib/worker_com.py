@@ -4,12 +4,13 @@ import datetime
 
 
 def send_message(message: str):
-    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    sock.connect(WORKER_SOCKET)
+    if WORKER_SOCKET is not None:
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        sock.connect(WORKER_SOCKET)
 
-    sock.send(message.encode())
+        sock.send(message.encode())
 
-    sock.close()
+        sock.close()
 
 
 def set_time(new_time: datetime.datetime):

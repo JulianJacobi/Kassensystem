@@ -163,4 +163,4 @@ if GPIO_AVAILABLE is False:
 
 ETHERNET_PORT = config.get('ethernet', 'port', fallback=None)
 
-WORKER_SOCKET = config.get('general', 'root_worker_sock_path')
+WORKER_SOCKET = config.get('general', 'root_worker_sock_path', fallback=None)
