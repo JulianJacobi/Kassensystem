@@ -57,10 +57,18 @@ def table_menu_view(request, table_set_id, table_id):
         for booking in bookings:
             total += booking.get('price', 0.0)
 
+        categories = {}
+        for category in models.ProductCategory.objects.filter(products__menu=menu):
+            products = category.products.filter(menu=menu)
+            categories[category.name] = products
+        uncategorized = menu.products.filter(category__isnull=True)
+
         return render(request, 'table_menu.html', context={'title': 'Tisch {}'.format(table.name),
                                                            'table': table,
                                                            'bookings': bookings,
                                                            'total': total,
+                                                           'categories': categories,
+                                                           'uncategorized': uncategorized,
                                                            'menu': menu})
     except models.TableSet.DoesNotExist:
         return redirect('kasse:kasse')

@@ -5,8 +5,8 @@
 {% block body %}
     <br>
     <div class="container-fluid">
-        <a href="{% url 'kasse:kasse' %}" class="btn btn-default">Hauptmenü</a>
-        <div style="width: 100%; height: 90vh; position: relative;">
+        <a href="{% url 'kasse:kasse' %}" class="btn btn-default hidden-xs">Hauptmenü</a>
+        <div style="width: 100%; height: 90vh; position: relative;" class="hidden-xs">
             {% for table in tableset.table_set.all %}
                 <a href="{% url 'kasse:table_menu' tableset.id table.id %}">
                     <div class="kasse-table" style="width: {% widthratio table.size_x 1.0000 100.0000 %}%; height: {% widthratio table.size_y 1 100 %}%; position: absolute; top: {% widthratio table.pos_y 1 100 %}%; left: {% widthratio table.pos_x 1 100 %}%;">
@@ -15,6 +15,22 @@
                         {{ table.total|floatformat:2 }} €
                     </div>
                 </a>
+            {% endfor %}
+        </div>
+        <!--<table class="table table-striped visible-sm visible-xs">
+            <tbody>
+            {% for table in tableset.table_set.all %}
+                <tr>
+                    <td><a href="{% url 'kasse:table_menu' tableset.id table.id %}">{{ table.name }}</a></td>
+                    <td>{{ table.total|floatformat:2 }} €</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>-->
+        <div class="visible-xs btn-group-vertical" role="group">
+            <a href="{% url 'kasse:kasse' %}" class="btn btn-primary btn-lg"><span class="glyphicon glyphicon-menu-left"></span> Hauptmenü</a>
+            {% for table in tableset.table_set.all %}
+                <a href="{% url 'kasse:table_menu' tableset.id table.id %}" class="btn btn-default btn-lg">{{ table.name }}<br><b>{{ table.total|floatformat:2 }} €</b></a>
             {% endfor %}
         </div>
     </div>

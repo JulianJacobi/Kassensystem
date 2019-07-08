@@ -3,7 +3,7 @@
 {% load formats %}
 
 {% block body %}
-    <div class="container-fluid container-kasse">
+    <div class="container-fluid container-kasse hidden-xs">
         <div id="menu-container" class="col-sm-8 col-lg-9" style="min-height: 100vh;">
             <h1><b>{{ table.name }}</b></h1>
             {% for menuitem in menu.menuitem_set.all %}<a href="{% url 'kasse:add_product_to_table' table.table_set_id table.id %}?productId={{ menuitem.product.id }}"><button class="btn btn-{{ menuitem.color }} btn-menu menu-item">{{ menuitem.product.name }}<br><b class="price-nice">{{ menuitem.product.price }}</b></button></a>{% endfor %}
@@ -45,6 +45,80 @@
             </table>
         </div>
     </div>
+    <div class="container-fluid visible-xs">
+        <h1>{{ table.name }}</h1>
+        <a href="{% url 'kasse:tableset' table.table_set_id %}" class="btn btn-primary btn-lg" style="width: 100%;"><span class="glyphicon glyphicon-menu-left"></span> Zurück</a>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Preis</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for booking in bookings %}
+                <tr>
+                    <td>{{ booking.name }}</td>
+                    <td>{{ booking.price|floatformat:2 }} €</td>
+                    <td>
+                        <a href="{% url 'kasse:remove_product_from_table' table.table_set_id table.id %}?index={{ forloop.counter0 }}" class="btn btn-danger btn-xs">
+                            <span class="glyphicon glyphicon-minus"></span>
+                        </a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th>Summe</th>
+                    <th>{{ table.total|floatformat:2 }} €</th>
+                    <th></th>
+                </tr>
+            </tfoot>
+        </table>
+        <div class="btn-group-vertical" role="group" style="width: 100%;">
+            <button class="btn btn-warning btn-lg" data-toggle="collapse" data-target="#products_container"><span class="glyphicon glyphicon-plus"></span> Produkte</button>
+            <button class="btn btn-success btn-lg" data-toggle="modal" data-target="#finalizeModal">Bezahlen</button>
+        </div>
+        <div class="container-fluid collapse" style="position: fixed; top: 0; left: 0; width: 100%; min-height: 100%; max-height: 100%; height: 100%; overflow-y: scroll; background: white; z-index: 9999;" id="products_container">
+            <br>
+            <div class="btn-group-vertical" style="width: 100%;" id="cat-btn-group">
+                <button class="btn btn-primary btn-lg" data-toggle="collapse" data-target="#products_container"><span class="glyphicon glyphicon-menu-left"></span> Zurück</button>
+                {% for category, cat_products in categories.items %}
+                    <button class="btn btn-default btn-lg btn-group-header" data-toggle="collapse" data-target="#cat_{{ forloop.counter }}" data-parent="#cat-btn-group"><b>{{ category }}</b></button>
+                    <div id="cat_{{ forloop.counter}}" class="collapse">
+                        <div class="btn-group-vertical" style="width: 100%;">
+                            {% for product in cat_products %}
+                                <a href="{% url 'kasse:add_product_to_table' table.table_set_id table.id %}?productId={{ product.id }}" class="btn btn-default btn-lg">
+                                    {{ product.name }}
+                                    <br>
+                                    <b>{{ product.price|floatformat:2 }} €</b>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+                {% if uncategorized|length > 0 %}
+                    <button class="btn btn-default btn-lg btn-group-header" data-toggle="collapse" data-target="#uncat" data-parent="#cat-btn-group"><b>Unkategorisiert</b></button>
+                    <div id="uncat" class="collapse">
+                        <div class="btn-group-vertical" style="width: 100%;">
+                            {% for product in uncategorized %}
+                                <a href="{% url 'kasse:add_product_to_table' table.table_set_id table.id %}?productId={{ product.id }}" class="btn btn-default btn-lg">
+                                    {{ product.name }}
+                                    <br>
+                                    <b>{{ product.price|floatformat:2 }} €</b>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="container-fluid collapse" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; min-height: 100%; max-height: 100%; overflow-y: scroll; z-index: 9999;">
+
+        </div>
+    </div>
 
     <div class="modal fade" id="finalizeModal" tabindex="-1" role="dialog" aria-labelledby="finalizeModalLabel">
         <div class="modal-dialog modal-lg" role="document">
@@ -59,7 +133,7 @@
                             <td><button class="btn btn-default btn-menu" onclick="givenConcat('7')">7</button></td>
                             <td><button class="btn btn-default btn-menu" onclick="givenConcat('8')">8</button></td>
                             <td><button class="btn btn-default btn-menu" onclick="givenConcat('9')">9</button></td>
-                            <td rowspan="2"><button class="btn btn-danger btn-menu double-button rotate" data-dismiss="modal">Abbrechen</button></td>
+                            <td rowspan="2" class="hidden-xs"><button class="btn btn-danger btn-menu double-button rotate" data-dismiss="modal">Abbrechen</button></td>
                         </tr>
                         <tr>
                             <td><button class="btn btn-default btn-menu" onclick="givenConcat('4')">4</button></td>
@@ -70,7 +144,7 @@
                             <td><button class="btn btn-default btn-menu" onclick="givenConcat('1')">1</button></td>
                             <td><button class="btn btn-default btn-menu" onclick="givenConcat('2')">2</button></td>
                             <td><button class="btn btn-default btn-menu" onclick="givenConcat('3')">3</button></td>
-                            <td rowspan="2">
+                            <td rowspan="2" class="hidden-xs">
                                 {% if gpio_available %}
                                     <button class="btn btn-success btn-menu double-button rotate" onclick="openDrawer()">
                                         Kasse öffnen
@@ -85,6 +159,20 @@
                         <tr>
                             <td><button class="btn btn-default btn-menu" onclick="givenConcat('0')">0</button></td>
                             <td colspan="2"><button class="btn btn-default btn-menu double-button" onclick="resetGiven()">Korrektur</button></td>
+                        </tr>
+                        <tr class="visible-xs">
+                            <td colspan="2"><button class="btn btn-danger btn-menu double-button" data-dismiss="modal">Abbrechen</button></td>
+                            <td>
+                                {% if gpio_available %}
+                                    <button class="btn btn-success btn-menu" onclick="openDrawer()">
+                                        Kasse öffnen
+                                    </button>
+                                {% else %}
+                                    <button class="btn btn-success btn-menu" onclick="finish()">
+                                        Fertig
+                                    </button>
+                                {% endif %}
+                            </td>
                         </tr>
                     </table>
                     <div id="finalizeCartTarget" style="margin-left: 9cm; height: 8cm; overflow-y: scroll;">
@@ -121,6 +209,7 @@
         </div>
     </div>
     <script>
+    $.support.transition = false
     var opened = false;
     var aborted = false;
     function floatToNice(float) {

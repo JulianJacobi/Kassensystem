@@ -128,3 +128,7 @@ body.theme-orange .modal-content {
     background: black;
     color: white;
 }
+
+.btn-group-header {
+    background: lightgrey;
+}
