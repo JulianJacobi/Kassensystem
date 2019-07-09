@@ -129,18 +129,18 @@
                 </div>
                 <div class="modal-body" style="min-height: 9.5cm;">
                     <table class="given-buttonfield" style="position: absolute;">
-                        <tr>
+                        <tr class="hidden-xs">
                             <td><button class="btn btn-default btn-menu" onclick="givenConcat('7')">7</button></td>
                             <td><button class="btn btn-default btn-menu" onclick="givenConcat('8')">8</button></td>
                             <td><button class="btn btn-default btn-menu" onclick="givenConcat('9')">9</button></td>
                             <td rowspan="2" class="hidden-xs"><button class="btn btn-danger btn-menu double-button rotate" data-dismiss="modal">Abbrechen</button></td>
                         </tr>
-                        <tr>
+                        <tr class="hidden-xs">
                             <td><button class="btn btn-default btn-menu" onclick="givenConcat('4')">4</button></td>
                             <td><button class="btn btn-default btn-menu" onclick="givenConcat('5')">5</button></td>
                             <td><button class="btn btn-default btn-menu" onclick="givenConcat('6')">6</button></td>
                         </tr>
-                        <tr>
+                        <tr class="hidden-xs">
                             <td><button class="btn btn-default btn-menu" onclick="givenConcat('1')">1</button></td>
                             <td><button class="btn btn-default btn-menu" onclick="givenConcat('2')">2</button></td>
                             <td><button class="btn btn-default btn-menu" onclick="givenConcat('3')">3</button></td>
@@ -156,9 +156,14 @@
                                 {% endif %}
                             </td>
                         </tr>
-                        <tr>
+                        <tr class="hidden-xs">
                             <td><button class="btn btn-default btn-menu" onclick="givenConcat('0')">0</button></td>
                             <td colspan="2"><button class="btn btn-default btn-menu double-button" onclick="resetGiven()">Korrektur</button></td>
+                        </tr>
+                        <tr class="visible-xs">
+                            <td colspan="3" style="text-align: center;">
+                                <h2>{{ total|floatformat:2 }} €</h2>
+                            </td>
                         </tr>
                         <tr class="visible-xs">
                             <td colspan="2"><button class="btn btn-danger btn-menu double-button" data-dismiss="modal">Abbrechen</button></td>
